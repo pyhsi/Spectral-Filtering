@@ -1,0 +1,72 @@
+clear all; close all; clc;
+load("C:\Users\timot\Desktop\amath 482\Testdata.mat")
+
+%% Averaging the Spectrum
+
+L=15; % spatial domain
+n=64; % Fourier modes
+x2=linspace(-L,L,n+1); x=x2(1:n); y=x; z=x;
+k=(2*pi/(2*L))*[0:(n/2-1) -n/2:-1]; ks=fftshift(k);
+[X,Y,Z]=meshgrid(x,y,z);
+[Kx,Ky,Kz]=meshgrid(ks,ks,ks);
+
+uave = zeros(n,n,n);
+for j=1:20
+    Un(:,:,:)=reshape(Undata(j,:),n,n,n);
+    utn=fftn(Un);
+    uave=uave+utn;
+    %close all, isosurface(X,Y,Z,abs(Un),0.4)
+    %axis([-20 20 -20 20 -20 20]), grid on, drawnow
+    
+    %pause(1)
+end
+
+close all, isosurface(Kx,Ky,Kz,fftshift(abs(uave))./max(abs(uave(:))),0.6)
+axis([-2*pi 2*pi -2*pi 2*pi -2*pi 2*pi]), grid on, drawnow
+xlabel('Kx (Frequency)');
+ylabel('Ky (Frequency)');
+zlabel('Kz (Frequency)');
+title('Averaging of the Spectrum');
+ax = gca;
+ax.FontSize = 15;
+
+absUave = fftshift(abs(uave));
+[maximum, index] = max(absUave(:));
+
+% Center Frequency
+[I,J,K] = ind2sub([64,64,64],index)
+
+Kx(I,J,K)
+Ky(I,J,K)
+Kz(I,J,K)
+
+%% Filter
+clc
+
+b = 0.1;
+
+filter = fftshift(exp(-b *((Kx-Kx(I, J, K)).^2 + (Ky-Ky(I, J, K)).^2 + (Kz-Kz(I,J,K)).^2)));
+
+xx = zeros(20,1);
+yy = zeros(20,1);
+zz = zeros(20,1);
+for j=1:20
+    Un(:,:,:)=reshape(Undata(j,:),n,n,n);
+    uftn=fftn(Un).*filter;
+    unf = ifftn(uftn);
+    [maximum,index] = max(abs(unf(:)));
+    [xx(j),yy(j),zz(j)] = ind2sub([64,64,64],index);
+end
+
+plot3(xx,yy,zz)
+grid on
+xlabel('x (position)')
+ylabel('y (position)')
+zlabel('z (position)')
+time = [1:20]; txt = num2str(time); cstr = cellstr(txt);
+text(xx,yy,zz,cstr);
+title('Path of the Marble in Fluffy')
+
+%% part 3
+
+[xx(20), yy(20), zz(20)]
